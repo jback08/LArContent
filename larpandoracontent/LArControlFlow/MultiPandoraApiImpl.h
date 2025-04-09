@@ -91,11 +91,12 @@ private:
     void AddDaughterPandoraInstance(const pandora::Pandora *const pPrimaryPandora, const pandora::Pandora *const pDaughterPandora);
 
     /**
-     *  @brief  Delete all pandora instances associated with (and including) a specified primary pandora instance
+     *  @brief  Delete all pandora instances associated with a specified primary pandora instance
      *
      *  @param  pPrimaryPandora the address of the primary pandora instance
+     *  @param  deletePrimary boolean to specify if the primary instance needs to be deleted as well
      */
-    void DeletePandoraInstances(const pandora::Pandora *const pPrimaryPandora);
+    void DeletePandoraInstances(const pandora::Pandora *const pPrimaryPandora, bool deletePrimary = true);
 
     /**
      *  @brief  Set the volume id associated with a given pandora instance

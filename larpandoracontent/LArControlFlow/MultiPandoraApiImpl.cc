@@ -127,27 +127,35 @@ void MultiPandoraApiImpl::AddDaughterPandoraInstance(const pandora::Pandora *con
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void MultiPandoraApiImpl::DeletePandoraInstances(const pandora::Pandora *const pPrimaryPandora)
+void MultiPandoraApiImpl::DeletePandoraInstances(const pandora::Pandora *const pPrimaryPandora, bool deletePrimary)
 {
-    PandoraInstanceList pandoraInstanceList;
-
-    try
-    {
-        pandoraInstanceList = this->GetDaughterPandoraInstanceList(pPrimaryPandora);
-    }
-    catch (const pandora::StatusCodeException &)
-    {
-        std::cout << "MultiPandoraApiImpl::DeletePandoraInstances - unable to find daughter instances associated with primary "
-                  << pPrimaryPandora << std::endl;
-    }
-
-    pandoraInstanceList.push_back(pPrimaryPandora);
-    m_primaryToDaughtersMap.erase(pPrimaryPandora);
+    PandoraInstanceList pandoraInstanceList = this->GetDaughterPandoraInstanceList(pPrimaryPandora);
 
     for (const pandora::Pandora *const pPandora : pandoraInstanceList)
     {
+        // Does this have any daughters? If so, recursively delete them
+        if (m_primaryToDaughtersMap.find(pPandora) != m_primaryToDaughtersMap.end())
+        {
+            // pPandora becomes a "primary", but we don't want to delete it yet
+            this->DeletePandoraInstances(pPandora, false);
+        }
+
+        // Now delete pPandora
         m_pandoraToVolumeIdMap.erase(pPandora);
         m_daughterToPrimaryMap.erase(pPandora);
+        // Delete its entry in the primary-to-daughters map if requested
+        if (deletePrimary)
+            m_primaryToDaughtersMap.erase(pPandora);
+
         delete pPandora;
+    }
+
+    // Now delete the primary instance if requested
+    if (deletePrimary)
+    {
+        m_pandoraToVolumeIdMap.erase(pPrimaryPandora);
+        m_daughterToPrimaryMap.erase(pPrimaryPandora);
+        m_primaryToDaughtersMap.erase(pPrimaryPandora);
+        delete pPrimaryPandora;
     }
 }
